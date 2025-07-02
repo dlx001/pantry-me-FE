@@ -2,7 +2,8 @@ import { ClerkProvider, useAuth } from "@clerk/clerk-expo";
 import { Slot, useRouter, useSegments } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import { useEffect } from "react";
-
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { SelectionProvider } from "../shared/SelectionContext";
 const CLERK_PUBLISHABLE_KEY =
   "pk_test_YmVjb21pbmctZ3VsbC04OC5jbGVyay5hY2NvdW50cy5kZXYk";
 
@@ -51,7 +52,11 @@ const RootLayout = () => {
       publishableKey={CLERK_PUBLISHABLE_KEY}
       tokenCache={tokenCache}
     >
-      <InitialLayout />
+      <SelectionProvider>
+        <GestureHandlerRootView>
+          <InitialLayout />
+        </GestureHandlerRootView>
+      </SelectionProvider>
     </ClerkProvider>
   );
 };

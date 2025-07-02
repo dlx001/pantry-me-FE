@@ -53,11 +53,22 @@ const TabsPage = () => {
         redirect={!isSignedIn}
       />
       <Tabs.Screen
+        name="pantry"
+        options={{
+          headerTitle: "My Pantry",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="server-outline" size={size} color={color} />
+          ),
+          tabBarLabel: "My Pantry",
+        }}
+        redirect={!isSignedIn}
+      />
+      <Tabs.Screen
         name="lists"
         options={{
           headerTitle: "My Lists",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="list-circle-outline" size={size} color={color} />
+            <Ionicons name="list-outline" size={size} color={color} />
           ),
           tabBarLabel: "My Lists",
         }}
