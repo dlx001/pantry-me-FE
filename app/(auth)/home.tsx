@@ -2,6 +2,7 @@ import { useUser } from "@clerk/clerk-expo";
 import React, { useState } from "react";
 import { Text, View } from "react-native";
 import { useApiClient } from "../../utils/apiClient";
+
 const Home = () => {
   const { user } = useUser();
   const { request } = useApiClient();

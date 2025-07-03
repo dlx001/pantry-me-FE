@@ -10,8 +10,6 @@ type ItemBlockProps = {
   onPress?: () => void;
 };
 
-
-
 export const ItemBlock = ({ item, onDeleted, selected = false, onLongPress, onPress }: ItemBlockProps) => {
   return (
     <TouchableOpacity

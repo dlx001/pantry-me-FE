@@ -3,6 +3,7 @@ import { Stack } from "expo-router";
 import { useState } from "react";
 import { Button, StyleSheet, TextInput, View } from "react-native";
 import Spinner from "react-native-loading-spinner-overlay";
+
 const Register = () => {
   const { isLoaded, signUp, setActive } = useSignUp();
 

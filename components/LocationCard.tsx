@@ -1,8 +1,10 @@
 import { getDistance } from "geolib";
 import { Image, StyleSheet, Text, View } from "react-native";
+import citymarketLogo from '../assets/images/FreshCart_CityMarket.png';
+// import food4lessLogo from '../assets/images/FreshCart_Food4Less.png';
+import fredmeyerLogo from '../assets/images/FreshCart_FredMeyer.png';
+import krogerLogo from '../assets/images/Kroger Logo Blue.png';
 import ralphsLogo from '../assets/images/Ralphs.png';
-
-
 
 export type LocationType = {
   locationId: string | number;
@@ -32,10 +34,33 @@ const LocationCard = ({ location, userLocation, selected = false, pressed = fals
   );
   const distanceMiles = (distance / 1609.34).toFixed(2);
 
-  const imageSource =
-    location.chain.toLowerCase() === "ralphs"
-      ? ralphsLogo
-      : { uri: "https://upload.wikimedia.org/wikipedia/commons/6/65/No-Image-Placeholder.svg" };
+  const getImageSource = () => {
+    const chainLower = location.chain.toLowerCase();
+    
+    switch (chainLower) {
+      case "ralphs":
+        return ralphsLogo;
+      case "kroger":
+        return krogerLogo;
+      case "food4less":
+      case "food 4 less":
+      case "food4 less":
+      case "food4-less":
+      case "food 4less":
+      case "food4less":
+        return require('../assets/images/FreshCart_Food4Less.png');
+      case "fredmeyer":
+      case "fred meyer":
+        return fredmeyerLogo;
+      case "citymarket":
+      case "city market":
+        return citymarketLogo;
+      default:
+        return { uri: "https://upload.wikimedia.org/wikipedia/commons/6/65/No-Image-Placeholder.svg" };
+    }
+  };
+
+  const imageSource = getImageSource();
 
   return (
     <View

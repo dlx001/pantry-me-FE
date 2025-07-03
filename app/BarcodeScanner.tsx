@@ -4,6 +4,7 @@ import { CameraView, useCameraPermissions } from "expo-camera";
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
 import { Alert, Dimensions, Modal, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+
 import { useApiClient } from "../utils/apiClient";
 const { width, height } = Dimensions.get('window');
 const SCAN_AREA_SIZE = Math.min(width, height) * 0.6;
@@ -14,7 +15,7 @@ const BarcodeScanner = () => {
   const [showUnrecognizedModal, setShowUnrecognizedModal] = useState(false);
   const [showRecognizedModal, setShowRecognizedModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [scannedItem, setScannedItem] = useState<any>({code: "10777466", name: "sprite", image_url: "https://images.openfoodfacts.org/images/products/000/001/077/7466/front_ar.4.200.jpg"});
+  const [scannedItem, setScannedItem] = useState<any>(null);
   const { request } = useApiClient();
   const router = useRouter();
 
@@ -48,9 +49,9 @@ const BarcodeScanner = () => {
       console.log(JSON.stringify(response));
       
       if (response.data === null) {
-        //setScannedItem(response.data);
-        setShowRecognizedModal(true);
-        //setShowUnrecognizedModal(true);
+        // Item not found in database - store the barcode data for display
+        setScannedItem({ barcode: data });
+        setShowUnrecognizedModal(true);
       } else {
         setScannedItem(response.data);
         setShowRecognizedModal(true);
@@ -126,7 +127,15 @@ const BarcodeScanner = () => {
             <Text style={styles.modalMessage}>
               This item was not found in our database. You can add it manually to your pantry.
             </Text>
-            <TouchableOpacity style={styles.modalButton} onPress={handleGoToPantry}>
+            {scannedItem?.barcode && (
+              <Text style={styles.barcodeInfo}>
+                Barcode: {scannedItem.barcode}
+              </Text>
+            )}
+            <TouchableOpacity 
+              style={styles.modalButton} 
+              onPress={handleGoToPantry}
+            >
               <Text style={styles.modalButtonText}>Go to Pantry</Text>
             </TouchableOpacity>
             <TouchableOpacity 
@@ -150,7 +159,7 @@ const BarcodeScanner = () => {
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Item Found!</Text>
             <Text style={styles.modalMessage}>
-              {scannedItem?.name || 'Item recognized successfully'}
+              "{scannedItem?.name || 'Item'}" was recognized successfully.
             </Text>
             <TouchableOpacity 
               style={styles.modalButton} 
@@ -178,7 +187,9 @@ const BarcodeScanner = () => {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Success!</Text>
-            <Text style={styles.modalMessage}>Item was added to your pantry.</Text>
+            <Text style={styles.modalMessage}>
+              "{scannedItem?.name || 'Item'}" was added to your pantry.
+            </Text>
             <TouchableOpacity
               style={styles.modalButton}
               onPress={() => {
@@ -313,6 +324,13 @@ const styles = StyleSheet.create({
   modalCancelText: {
     color: "#666",
     fontSize: 16,
+  },
+  barcodeInfo: {
+    color: "#666",
+    fontSize: 14,
+    textAlign: "center",
+    marginTop: 8,
+    fontFamily: "monospace",
   },
 }); 
 

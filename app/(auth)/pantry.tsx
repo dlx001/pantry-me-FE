@@ -35,15 +35,20 @@ const Pantry = () => {
   const [suggestionLoading, setSuggestionLoading] = useState(false);
   const [currentSuggestionIndex, setCurrentSuggestionIndex] = useState(0);
   const [selectedProductByItem, setSelectedProductByItem] = useState<{ [itemId: string]: { locationId: string | number, productId: string | number } }>({});
+  const [loading, setLoading] = useState(true);
+  const [locationLoading, setLocationLoading] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
       try {
+        setLoading(true);
         const data = await request("/item");
         console.log(data.data);
         setItems(data.data);
       } catch (err) {
         console.error("API error:", err);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -79,24 +84,27 @@ const Pantry = () => {
   
 
   const handleConvertSelected = async () => {
-    let { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== 'granted') {
-      alert('Permission to access location was denied');
-      return;
-    }
-    let location = await Location.getCurrentPositionAsync({});
-    const lat = location.coords.latitude;
-    const lng = location.coords.longitude;
-    setUserLocation({ lat, lng });
-
-    // Make your API request to get locations
+    setLocationLoading(true);
     try {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        alert('Permission to access location was denied');
+        return;
+      }
+      let location = await Location.getCurrentPositionAsync({});
+      const lat = location.coords.latitude;
+      const lng = location.coords.longitude;
+      setUserLocation({ lat, lng });
+
+      // Make your API request to get locations
       let latlong = lat + ',' + lng;
       const response = await request('/item/location?latlong=' + latlong, 'GET');
       setLocations(response.data); 
       setShowLocationsModal(true);
     } catch (error) {
       alert('Failed to convert to grocery list');
+    } finally {
+      setLocationLoading(false);
     }
   };
 
@@ -123,7 +131,7 @@ const Pantry = () => {
             brand: selectedProduct.brand || null,
             unit: selectedProduct.items?.[0]?.size || selectedProduct.items?.[0]?.unit || 'unit',
             price: selectedProduct.items?.[0]?.price?.regular?.toString() || '0',
-            image_url: selectedProduct.images?.[0]?.sizes?.find((s: any) => s.size === 'medium')?.url || null,
+            img_url: selectedProduct.images?.[0]?.sizes?.find((s: any) => s.size === 'medium')?.url || null,
             store: '' // Will be set below with location name
           });
         }
@@ -169,6 +177,14 @@ const Pantry = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.loadingText}>Loading pantry items...</Text>
+      </View>
+    );
+  }
+
   return (
     <SelectionProvider>
       <View style={{ flex: 1 }}>
@@ -179,48 +195,61 @@ const Pantry = () => {
             <Button title="Unselect All" onPress={() => setSelectedItems([])} />
           </View>
         )}
-        <FlatList
-          data={items}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={({ item }) => (
-            <ItemBlock
-              item={item}
-              onDeleted={(deleteId) =>
-                setItems((prev) => prev.filter((i) => i.id !== deleteId))
-              }
-              selected={selectedItems.includes(item.id)}
-              onLongPress={() => {
-                setSelectMode(true);
-                setSelectedItems([item.id]);
-              }}
-              onPress={() => {
-                if (selectMode) {
-                  setSelectedItems(selectedItems => {
-                    const isSelected = selectedItems.includes(item.id);
-                    const newSelected = isSelected
-                      ? selectedItems.filter(id => id !== item.id)
-                      : [...selectedItems, item.id];
-                    // If all items are unselected, exit select mode
-                    if (newSelected.length === 0) setSelectMode(false);
-                    return newSelected;
-                  });
-                }
-              }}
-            />
-          )}
-          contentContainerStyle={{ paddingBottom: 100 }}
-          scrollEnabled={!modalVisible}
-          pointerEvents={modalVisible ? "none" : "auto"}
-        />
+        
+        {items.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyStateText}>No items in your pantry yet</Text>
+            <Text style={styles.emptyStateSubtext}>
+              Add items to your pantry to get started
+            </Text>
+          </View>
+        ) : (
+          <FlatList
+            data={items}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={({ item }) => (
+              <ItemBlock
+                item={item}
+                onDeleted={(deletedId) => {
+                  setItems(items => items.filter(item => item.id !== deletedId));
+                }}
+                selected={selectedItems.includes(item.id)}
+                onLongPress={() => {
+                  if (!selectMode) {
+                    setSelectMode(true);
+                    setSelectedItems([item.id]);
+                  }
+                }}
+                onPress={() => {
+                  if (selectMode) {
+                    setSelectedItems(prev => {
+                      const isSelected = prev.includes(item.id);
+                      const newSelected = isSelected
+                        ? prev.filter(id => id !== item.id)
+                        : [...prev, item.id];
+                      // If all items are unselected, exit select mode
+                      if (newSelected.length === 0) setSelectMode(false);
+                      return newSelected;
+                    });
+                  }
+                }}
+              />
+            )}
+            contentContainerStyle={styles.listContainer}
+          />
+        )}
 
-        <AddItemButton
-          setModalVisible={setModalVisible}
+        <AddItemButton 
+          setModalVisible={setModalVisible} 
           onScan={() => router.push('/BarcodeScanner')}
         />
         <AddItemModal
           visible={modalVisible}
           onClose={() => setModalVisible(false)}
-          onItemCreated={(newItem) => setItems((prev) => [...prev, newItem])}
+          onItemCreated={(newItem) => {
+            setItems(prev => [...prev, newItem]);
+            setModalVisible(false);
+          }}
         />
 
         <Modal visible={showLocationsModal} animationType="slide">
@@ -228,39 +257,45 @@ const Pantry = () => {
             <TouchableOpacity onPress={() => setShowLocationsModal(false)} style={{ padding: 16 }}>
               <Text style={{ color: "#6c47ff", fontWeight: "bold" }}>Close</Text>
             </TouchableOpacity>
-            <FlatList
-              data={locations}
-              keyExtractor={(item, idx) => (item?.locationId ? item.locationId.toString() : idx.toString())}
-              renderItem={({ item }) => {
-                const isSelected = selectedLocationIds.includes(item.locationId);
-                const isPressed = pressedId === item.locationId;
-                return (
-                  <TouchableOpacity
-                    onPress={() => {
-                      if (isSelected) {
-                        setSelectedLocationIds(ids => ids.filter(id => id !== item.locationId));
-                      } else if (selectedLocationIds.length < 2) {
-                        setSelectedLocationIds(ids => [...ids, item.locationId]);
-                      } else {
-                        alert('You can only select up to 2 locations.');
-                      }
-                    }}
-                    onPressIn={() => setPressedId(item.locationId)}
-                    onPressOut={() => setPressedId(null)}
-                    activeOpacity={1}
-                  >
-                    {userLocation && (
-                      <LocationCard
-                        location={item}
-                        userLocation={userLocation}
-                        selected={isSelected}
-                        pressed={isPressed}
-                      />
-                    )}
-                  </TouchableOpacity>
-                );
-              }}
-            />
+            {locationLoading ? (
+              <View style={styles.modalLoadingContainer}>
+                <Text style={styles.modalLoadingText}>Finding nearby stores...</Text>
+              </View>
+            ) : (
+              <FlatList
+                data={locations}
+                keyExtractor={(item, idx) => (item?.locationId ? item.locationId.toString() : idx.toString())}
+                renderItem={({ item }) => {
+                  const isSelected = selectedLocationIds.includes(item.locationId);
+                  const isPressed = pressedId === item.locationId;
+                  return (
+                    <TouchableOpacity
+                      onPress={() => {
+                        if (isSelected) {
+                          setSelectedLocationIds(ids => ids.filter(id => id !== item.locationId));
+                        } else if (selectedLocationIds.length < 2) {
+                          setSelectedLocationIds(ids => [...ids, item.locationId]);
+                        } else {
+                          alert('You can only select up to 2 locations.');
+                        }
+                      }}
+                      onPressIn={() => setPressedId(item.locationId)}
+                      onPressOut={() => setPressedId(null)}
+                      activeOpacity={1}
+                    >
+                      {userLocation && (
+                        <LocationCard
+                          location={item}
+                          userLocation={userLocation}
+                          selected={isSelected}
+                          pressed={isPressed}
+                        />
+                      )}
+                    </TouchableOpacity>
+                  );
+                }}
+              />
+            )}
             <Button
               title="See Suggestions"
               disabled={selectedLocationIds.length === 0}
@@ -275,8 +310,20 @@ const Pantry = () => {
                     params.append('item', item.name);
                     locationIdsArray.forEach(id => params.append('locationIds', id.toString()));
                     const res = await request(`/item/kroger?${params.toString()}`);
-                    newProducts[item.id] = res;
-                    console.log('Full response:', JSON.stringify(res, null, 2));
+                    
+                    // Sort products by price (lowest first) for each location
+                    const sortedProducts: { [locationId: string]: any[] } = {};
+                    Object.keys(res).forEach(locationId => {
+                      const products = res[locationId] || [];
+                      sortedProducts[locationId] = products.sort((a: any, b: any) => {
+                        const priceA = parseFloat(a.items?.[0]?.price?.regular || '0');
+                        const priceB = parseFloat(b.items?.[0]?.price?.regular || '0');
+                        return priceA - priceB;
+                      });
+                    });
+                    
+                    newProducts[item.id] = sortedProducts;
+                    console.log('Full response:', JSON.stringify(sortedProducts, null, 2));
                   }
                   setProductsByItemAndLocation(newProducts);
                   setShowProductSuggestion(true);
@@ -295,7 +342,11 @@ const Pantry = () => {
             <TouchableOpacity onPress={() => setShowProductSuggestion(false)} style={{ padding: 16 }}>
               <Text style={{ color: "#6c47ff", fontWeight: "bold" }}>Close</Text>
             </TouchableOpacity>
-            {suggestionLoading && <Text style={{textAlign:'center',margin:10}}>Loading suggestions...</Text>}
+            {suggestionLoading && (
+              <View style={styles.modalLoadingContainer}>
+                <Text style={styles.modalLoadingText}>Loading product suggestions...</Text>
+              </View>
+            )}
             {selectedItems.length > 0 && (
               <>
                 <Text style={{ fontWeight: 'bold', fontSize: 20, textAlign: 'center', marginBottom: 12 }}>
@@ -308,6 +359,9 @@ const Pantry = () => {
                       const location = locations.find(l => l.locationId === locationId);
                       return (
                         <View key={locationId} style={{ marginBottom: 16 }}>
+                          <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#6c47ff', marginBottom: 8, marginLeft: 16 }}>
+                            {location?.name || `Location ${locationId}`}
+                          </Text>
                           <FlatList
                             data={products}
                             keyExtractor={product => product.productId || product.id}
@@ -379,7 +433,19 @@ const Pantry = () => {
                             params.append('item', item.name);
                             selectedLocationIds.map(Number).forEach(id => params.append('locationIds', id.toString()));
                             const res = await request(`/item/kroger?${params.toString()}`);
-                            setProductsByItemAndLocation(prev => ({ ...prev, [itemId]: res }));
+                            
+                            // Sort products by price (lowest first) for each location
+                            const sortedProducts: { [locationId: string]: any[] } = {};
+                            Object.keys(res).forEach(locationId => {
+                              const products = res[locationId] || [];
+                              sortedProducts[locationId] = products.sort((a: any, b: any) => {
+                                const priceA = parseFloat(a.items?.[0]?.price?.regular || '0');
+                                const priceB = parseFloat(b.items?.[0]?.price?.regular || '0');
+                                return priceA - priceB;
+                              });
+                            });
+                            
+                            setProductsByItemAndLocation(prev => ({ ...prev, [itemId]: sortedProducts }));
                           }
                         }
                         setCurrentSuggestionIndex(prevIndex);
@@ -389,7 +455,7 @@ const Pantry = () => {
                     disabled={currentSuggestionIndex === 0 || suggestionLoading}
                   />
                   <Text style={{ fontSize: 16, color: '#6c47ff', fontWeight: 'bold' }}>
-                    {currentSuggestionIndex + 1} / {selectedItems.length}
+                    {currentSuggestionIndex + 1} of {selectedItems.length}
                   </Text>
                   <Button
                     title="Next"
@@ -405,7 +471,19 @@ const Pantry = () => {
                             params.append('item', item.name);
                             selectedLocationIds.map(Number).forEach(id => params.append('locationIds', id.toString()));
                             const res = await request(`/item/kroger?${params.toString()}`);
-                            setProductsByItemAndLocation(prev => ({ ...prev, [itemId]: res }));
+                            
+                            // Sort products by price (lowest first) for each location
+                            const sortedProducts: { [locationId: string]: any[] } = {};
+                            Object.keys(res).forEach(locationId => {
+                              const products = res[locationId] || [];
+                              sortedProducts[locationId] = products.sort((a: any, b: any) => {
+                                const priceA = parseFloat(a.items?.[0]?.price?.regular || '0');
+                                const priceB = parseFloat(b.items?.[0]?.price?.regular || '0');
+                                return priceA - priceB;
+                              });
+                            });
+                            
+                            setProductsByItemAndLocation(prev => ({ ...prev, [itemId]: sortedProducts }));
                           }
                         }
                         setCurrentSuggestionIndex(nextIndex);
@@ -415,15 +493,12 @@ const Pantry = () => {
                     disabled={currentSuggestionIndex === selectedItems.length - 1 || suggestionLoading}
                   />
                 </View>
-                {selectedItems.length > 0 && selectedItems.every(itemId => selectedProductByItem[itemId]) && (
-                  <View style={{ alignItems: 'center', marginBottom: 16 }}>
-                    <Button
-                      title="Finish"
-                      color="#6c47ff"
-                      onPress={handleCreateLists}
-                    />
-                  </View>
-                )}
+                <Button
+                  title="Create Lists"
+                  onPress={handleCreateLists}
+                  disabled={Object.keys(selectedProductByItem).length === 0}
+                  color="#6c47ff"
+                />
               </>
             )}
           </View>
@@ -434,11 +509,10 @@ const Pantry = () => {
 };
 
 const styles = StyleSheet.create({
-  title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginVertical: 16,
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
   actionBar: {
     flexDirection: 'row',
@@ -449,10 +523,39 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#e0d7fa',
   },
-  unit: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    marginLeft: 12,
+  listContainer: {
+    padding: 16,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#666',
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+  },
+  emptyStateText: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: '#666',
+    marginBottom: 8,
+  },
+  emptyStateSubtext: {
+    fontSize: 14,
+    color: '#999',
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  modalLoadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalLoadingText: {
+    fontSize: 16,
+    color: '#666',
   },
 });
 

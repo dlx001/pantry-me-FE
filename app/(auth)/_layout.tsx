@@ -43,11 +43,11 @@ const TabsPage = () => {
       <Tabs.Screen
         name="profile"
         options={{
-          headerTitle: "My Profile",
+          headerTitle: "Profile",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="person-outline" size={size} color={color} />
           ),
-          tabBarLabel: "My Profile",
+          tabBarLabel: "Profile",
           headerRight: () => <LogoutButton />,
         }}
         redirect={!isSignedIn}
@@ -55,22 +55,22 @@ const TabsPage = () => {
       <Tabs.Screen
         name="pantry"
         options={{
-          headerTitle: "My Pantry",
+          headerTitle: "Pantry",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="server-outline" size={size} color={color} />
           ),
-          tabBarLabel: "My Pantry",
+          tabBarLabel: "Pantry",
         }}
         redirect={!isSignedIn}
       />
       <Tabs.Screen
         name="lists"
         options={{
-          headerTitle: "My Lists",
+          headerTitle: "Lists",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="list-outline" size={size} color={color} />
           ),
-          tabBarLabel: "My Lists",
+          tabBarLabel: "Lists",
         }}
         redirect={!isSignedIn}
       />

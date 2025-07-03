@@ -12,7 +12,7 @@ export interface GroceryItem {
   brand?: string;
   unit: string;
   price: string;
-  image_url?: string;
+  img_url?: string;
   store: string;
 }
 

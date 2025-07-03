@@ -5,12 +5,12 @@ import * as WebBrowser from "expo-web-browser";
 import React, { useCallback, useEffect, useState } from "react";
 
 import {
-  Button,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
+    Button,
+    Pressable,
+    StyleSheet,
+    Text,
+    TextInput,
+    View,
 } from "react-native";
 import Spinner from "react-native-loading-spinner-overlay";
 
