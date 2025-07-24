@@ -1,4 +1,3 @@
-import { Item } from "@/shared/types";
 import { BarCodeScannerResult } from "expo-barcode-scanner";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useRouter } from "expo-router";
@@ -46,13 +45,15 @@ const BarcodeScanner = () => {
     try {
       const response = await request("/item/scan", "POST", { data });
       console.log("Success", `Item scanned: ${data}`);
-      console.log(JSON.stringify(response));
+      console.log("API Response:", JSON.stringify(response, null, 2));
       
       if (response.data === null) {
         // Item not found in database - store the barcode data for display
         setScannedItem({ barcode: data });
         setShowUnrecognizedModal(true);
       } else {
+        // Store the full response data for debugging
+        console.log("Scanned item data:", JSON.stringify(response.data, null, 2));
         setScannedItem(response.data);
         setShowRecognizedModal(true);
       }
@@ -79,13 +80,29 @@ const BarcodeScanner = () => {
     setScanned(false);
   };
 
-  const handleAdditem = async (data: Item) => {
+  const handleAdditem = async (data: any) => {
     try {
-      const response = await request("/item", "POST", { ...data });
+      console.log("Adding item with data:", JSON.stringify(data, null, 2));
+      
+      // Prepare the item data for the API
+      const itemData = {
+        name: data.name || data.title || data.product_name || "Unknown Item",
+        listId: 1, // Default list ID - you might want to make this configurable
+        // Add any other required fields from the scan response
+        ...data
+      };
+      
+      console.log("Sending to API:", JSON.stringify(itemData, null, 2));
+      
+      const response = await request("/item", "POST", itemData);
+      console.log("Add item response:", JSON.stringify(response, null, 2));
+      
       setShowSuccessModal(true);
-      setShowRecognizedModal(false)
+      setShowRecognizedModal(false);
     } catch (error) {
-      Alert.alert("Error", "Failed to Add Item");
+      console.error("Failed to add item:", error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      Alert.alert("Error", `Failed to Add Item: ${errorMessage}`);
     }
   };
   
@@ -159,7 +176,7 @@ const BarcodeScanner = () => {
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Item Found!</Text>
             <Text style={styles.modalMessage}>
-              "{scannedItem?.name || 'Item'}" was recognized successfully.
+              "{scannedItem?.name || scannedItem?.title || scannedItem?.product_name || 'Item'}" was recognized successfully.
             </Text>
             <TouchableOpacity 
               style={styles.modalButton} 
@@ -188,7 +205,7 @@ const BarcodeScanner = () => {
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Success!</Text>
             <Text style={styles.modalMessage}>
-              "{scannedItem?.name || 'Item'}" was added to your pantry.
+              "{scannedItem?.name || scannedItem?.title || scannedItem?.product_name || 'Item'}" was added to your pantry.
             </Text>
             <TouchableOpacity
               style={styles.modalButton}

@@ -1,4 +1,4 @@
-const API_BASE_URL = "https://pantry-me.onrender.com";
+const API_BASE_URL = process.env.BACKEND_URL;
 import { useAuth } from "@clerk/clerk-expo";
 export const useApiClient = () => {
   const { getToken } = useAuth();

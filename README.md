@@ -1,52 +1,50 @@
-# Welcome to your Expo app 👋
+# PantryMe FE
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+This is a React Native Expo application that allows a user to add/scan items, find prices for those items from local grocery stores, and then convert those to grocery lists.
 
-you will need to use node 23 for this
+## Architecture
 
-## Get started
+- **Frontend:** React Native (Expo) with functional components and hooks.
+- **Backend:** REST API for item, location, and product data. Rest API is hosted on custom built Node JS server
+- **Authentication:** Clerk for secure user management.
+- **API Client:** Centralized in `utils/apiClient.ts` for all authenticated API requests.
+- **Screens/Pages:** Located in `app/`, organized by feature (auth, public, etc).
+- **Components:** Reusable UI components in `components/`.
+- **Assets:** Images and fonts in `assets/`.
 
-1. Install dependencies
+## Screenshots
 
-   ```bash
+Below are some screenshots of the app:
+
+<img src="assets/images/Media.jpg" alt="Main" width="300"/>
+<img src="assets/images/Media (4).jpg" alt="Screenshot 4" width="300"/>
+<img src="assets/images/Media (3).jpg" alt="Screenshot 3" width="300"/>
+<img src="assets/images/Media (2).jpg" alt="Screenshot 2" width="300"/>
+<img src="assets/images/Media (1).jpg" alt="Screenshot 1" width="300"/>
+
+## Getting Started
+
+To run this project locally:
+
+Run on Node version 23
+
+1. **Install dependencies:**
    npm install
-   ```
-
-2. Start the app
-
-   ```bash
+2. **Start the Expo development server:**
    npx expo start
-   ```
 
-In the output, you'll find options to open the app in a
+3. **Run on your device or emulator:**
+   - Use the Expo Go app on your phone to scan the QR code, or
+   - Press 'a' to run on Android emulator, 'i' for iOS simulator (Mac only), or 'w' for web.
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+4. **Environment Variables:**
+   - For SSO authentication, provide the .env key EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY from Clerk
+   - To connect to the backend for API requests, populate the .env file of BACKEND_URL
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+5. **Backend:**
+   - Make sure the backend REST API is running and accessible at the URL set in the .env file with name BACKEND_URL
 
-## Get a fresh project
+For more details, see the Expo documentation: https://docs.expo.dev/
 
-When you're ready, run:
 
-```bash
-npm run reset-project
-```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.

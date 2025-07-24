@@ -1,12 +1,14 @@
 import { getDistance } from "geolib";
 import { Image, StyleSheet, Text, View } from "react-native";
-import citymarketLogo from '../assets/images/FreshCart_CityMarket.png';
+import citymarketLogo from "../assets/images/FreshCart_CityMarket.png";
 // import food4lessLogo from '../assets/images/FreshCart_Food4Less.png';
-import fredmeyerLogo from '../assets/images/FreshCart_FredMeyer.png';
-import krogerLogo from '../assets/images/Kroger Logo Blue.png';
-import ralphsLogo from '../assets/images/Ralphs.png';
+import fredmeyerLogo from "../assets/images/FreshCart_FredMeyer.png";
+import krogerLogo from "../assets/images/Kroger Logo Blue.png";
+import ralphsLogo from "../assets/images/Ralphs.png";
+import walmartLogo from "../assets/images/Walmart.png";
 
 export type LocationType = {
+  endpoint: string;
   locationId: string | number;
   name: string;
   chain: string;
@@ -16,7 +18,7 @@ export type LocationType = {
     state: string;
     zipCode: string;
   };
-  geolocation: {
+  geoLocation: {
     latitude: number;
     longitude: number;
   };
@@ -27,16 +29,29 @@ export type UserLocationType = {
   lng: number;
 };
 
-const LocationCard = ({ location, userLocation, selected = false, pressed = false }: { location: LocationType; userLocation: UserLocationType; selected?: boolean; pressed?: boolean }) => {
+const LocationCard = ({
+  location,
+  userLocation,
+  selected = false,
+  pressed = false,
+}: {
+  location: LocationType;
+  userLocation: UserLocationType;
+  selected?: boolean;
+  pressed?: boolean;
+}) => {
   const distance = getDistance(
     { latitude: userLocation.lat, longitude: userLocation.lng },
-    { latitude: location.geolocation.latitude, longitude: location.geolocation.longitude }
+    {
+      latitude: location.geoLocation.latitude,
+      longitude: location.geoLocation.longitude,
+    }
   );
   const distanceMiles = (distance / 1609.34).toFixed(2);
 
   const getImageSource = () => {
     const chainLower = location.chain.toLowerCase();
-    
+
     switch (chainLower) {
       case "ralphs":
         return ralphsLogo;
@@ -48,15 +63,19 @@ const LocationCard = ({ location, userLocation, selected = false, pressed = fals
       case "food4-less":
       case "food 4less":
       case "food4less":
-        return require('../assets/images/FreshCart_Food4Less.png');
+        return require("../assets/images/FreshCart_Food4Less.png");
       case "fredmeyer":
       case "fred meyer":
         return fredmeyerLogo;
       case "citymarket":
       case "city market":
         return citymarketLogo;
+      case "walmart":
+        return walmartLogo;
       default:
-        return { uri: "https://upload.wikimedia.org/wikipedia/commons/6/65/No-Image-Placeholder.svg" };
+        return {
+          uri: "https://upload.wikimedia.org/wikipedia/commons/6/65/No-Image-Placeholder.svg",
+        };
     }
   };
 
@@ -75,7 +94,8 @@ const LocationCard = ({ location, userLocation, selected = false, pressed = fals
         <Text style={styles.chain}>{location.chain}</Text>
         <Text style={styles.name}>{location.name}</Text>
         <Text style={styles.address}>
-          {location.address.addressLine1}, {location.address.city}, {location.address.state} {location.address.zipCode}
+          {location.address.addressLine1}, {location.address.city},{" "}
+          {location.address.state} {location.address.zipCode}
         </Text>
         <Text style={styles.distance}>{distanceMiles} mi away</Text>
       </View>
@@ -134,4 +154,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default LocationCard; 
+export default LocationCard;

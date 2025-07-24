@@ -1,5 +1,4 @@
 import { Item } from "@/shared/types";
-import React from "react";
 import { StyleSheet, Text, TouchableOpacity } from "react-native";
 
 type ItemBlockProps = {
@@ -11,6 +10,14 @@ type ItemBlockProps = {
 };
 
 export const ItemBlock = ({ item, onDeleted, selected = false, onLongPress, onPress }: ItemBlockProps) => {
+  // Type guards for new product structure
+  const isProduct = (it: any): it is { description?: string; brand?: string; price?: number|string; size?: string; unit?: string } =>
+    typeof it === 'object' && ('description' in it || 'brand' in it || 'price' in it || 'size' in it || 'unit' in it);
+
+  const name = isProduct(item) && item.description ? item.description : item.name;
+  const brand = isProduct(item) ? item.brand : undefined;
+  const price = isProduct(item) ? item.price : undefined;
+  const size = isProduct(item) ? (item.size || item.unit) : undefined;
   return (
     <TouchableOpacity
       onLongPress={onLongPress}
@@ -18,8 +25,10 @@ export const ItemBlock = ({ item, onDeleted, selected = false, onLongPress, onPr
       style={[styles.itemContent, selected && styles.selected]}
       delayLongPress={300}
     >
-      <Text style={styles.itemText}>{item.name}</Text>
-      {/* <Text>{item.id}</Text> */}
+      <Text style={styles.itemText}>{name}</Text>
+      {brand && <Text style={styles.itemSubtext}>{brand}</Text>}
+      {size && <Text style={styles.itemSubtext}>{size}</Text>}
+      {price !== undefined && <Text style={styles.itemSubtext}>${parseFloat(price as string).toFixed(2)}</Text>}
       {item.expirationDate && (
         <Text style={styles.itemSubtext}>
           Exp: {new Date(item.expirationDate).toLocaleDateString()}
